@@ -1,7 +1,20 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
+import {
+    createNewNote,
+    findNotes,
+    getAllNotes,
+    removeAllNotes,
+    removeNotes,
+} from "./notes.js";
+import { listNotes } from "./utils.js";
 
 yargs(hideBin(process.argv))
+    .option("tags", {
+        alias: "t",
+        type: "string",
+        desc: "tags to add to note",
+    })
     .command(
         "new <note>",
         "Create a new note",
@@ -11,13 +24,20 @@ yargs(hideBin(process.argv))
                 description: "The content of the note to create",
             });
         },
-        (argv) => {},
+        async (argv) => {
+            const tags = argv.tags ? argv.tags.split(",") : [];
+            const note = await createNewNote(argv.note as string, tags);
+            console.log("New note! ", note);
+        },
     )
     .command(
         "all",
         "get all notes",
         () => {},
-        (argv) => {},
+        async (argv) => {
+            const notes = await getAllNotes();
+            listNotes(notes);
+        },
     )
     .command(
         "find <filter>",
@@ -29,7 +49,10 @@ yargs(hideBin(process.argv))
                 type: "string",
             });
         },
-        (argv) => {},
+        async (argv) => {
+            const matches = await findNotes(argv.filter as string);
+            listNotes(matches);
+        },
     )
     .command(
         "remove <id>",
@@ -40,7 +63,10 @@ yargs(hideBin(process.argv))
                 type: "string",
             });
         },
-        (argv) => {},
+        async (argv) => {
+            await removeNotes(argv.id as string);
+            console.log(`${argv.id}`);
+        },
     )
     .command(
         "web [port]",
@@ -52,18 +78,16 @@ yargs(hideBin(process.argv))
                 type: "number",
             });
         },
-        (argv) => {},
+        async (argv) => {},
     )
     .command(
         "clean",
         "remove all notes",
         () => {},
-        (argv) => {},
+        async (argv) => {
+            await removeAllNotes();
+            console.log("db reset");
+        },
     )
-    .option("tags", {
-        alias: "t",
-        type: "string",
-        desc: "tags to add to note",
-    })
     .demandCommand()
     .parse();
